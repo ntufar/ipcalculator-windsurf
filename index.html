@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP Calculator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>IP Calculator</h1>
+            <p>Convert between CIDR, IP addresses, and subnet masks in real-time</p>
+        </header>
+
+        <main>
+            <!-- CIDR to Conversions Section -->
+            <section class="calculator-section">
+                <h2>CIDR to Subnet Mask & IP Range</h2>
+                <div class="input-group">
+                    <label for="cidr-input">CIDR Notation (e.g., /24 or /64):</label>
+                    <input type="text" id="cidr-input" placeholder="/24" aria-describedby="cidr-help">
+                    <small id="cidr-help">Enter CIDR value (0-128)</small>
+                </div>
+
+                <div class="output-group">
+                    <div class="output-item">
+                        <label>Subnet Mask:</label>
+                        <output id="subnet-mask">Enter CIDR to see result</output>
+                    </div>
+                    <div class="output-item">
+                        <label>IP Range:</label>
+                        <output id="ip-range">Enter CIDR to see result</output>
+                    </div>
+                </div>
+            </section>
+
+            <!-- IP/Mask to CIDR Section -->
+            <section class="calculator-section">
+                <h2>IP Address & Subnet Mask to CIDR</h2>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="ip-input">IP Address:</label>
+                        <input type="text" id="ip-input" placeholder="192.168.1.1" aria-describedby="ip-help">
+                    </div>
+                    <div class="input-group">
+                        <label for="mask-input">Subnet Mask:</label>
+                        <input type="text" id="mask-input" placeholder="255.255.255.0" aria-describedby="mask-help">
+                    </div>
+                </div>
+                <small id="ip-help">IPv4 or IPv6 address</small>
+                <small id="mask-help">Corresponding subnet mask</small>
+
+                <div class="output-group">
+                    <div class="output-item">
+                        <label>CIDR Notation:</label>
+                        <output id="cidr-output">Enter IP and Mask to see result</output>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Additional Info Section -->
+            <section class="info-section">
+                <h2>Supported Conversions</h2>
+                <ul>
+                    <li><strong>IPv4:</strong> CIDR to subnet mask and IP range</li>
+                    <li><strong>IPv6:</strong> CIDR to subnet mask (IP range calculation available)</li>
+                    <li><strong>Bidirectional:</strong> IP address and subnet mask to CIDR</li>
+                </ul>
+                <p><em>Note: IPv6 IP range calculation is simplified. Full implementation may vary.</em></p>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2023 IP Calculator. Built with vanilla HTML, CSS, and JavaScript.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
