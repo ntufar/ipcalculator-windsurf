@@ -124,7 +124,11 @@ function isValidSubnetMask(mask) {
     if (isValidIpv4(mask)) {
         const parts = mask.split('.').map(Number);
         const binary = parts.map(p => p.toString(2).padStart(8, '0')).join('');
-        return binary.includes('01'); // Must be contiguous 1s followed by 0s
+        // Check if binary consists of contiguous 1s followed by contiguous 0s
+        const firstZero = binary.indexOf('0');
+        const lastOne = binary.lastIndexOf('1');
+        // Valid if: no zeros before ones end, and no ones after zeros start
+        return firstZero === -1 || lastOne < firstZero;
     }
     return false;
 }
