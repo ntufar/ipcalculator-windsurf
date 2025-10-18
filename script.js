@@ -80,8 +80,8 @@ function ipv6AndMaskToCidr(ip, mask) {
 function convertInput(type, value1, value2 = '') {
     const results = {};
     if (type === 'cidr') {
-        const cidr = parseInt(value1);
-        if (!isNaN(cidr)) {
+        const cidr = parseCidrInput(value1);
+        if (cidr !== null) {
             if (cidr <= 32) {
                 results.subnetMask = cidrToSubnetMask(cidr);
                 results.binaryMask = cidrToBinaryMask(cidr);
@@ -157,9 +157,14 @@ function isValidSubnetMask(mask) {
     return false;
 }
 
+function parseCidrInput(input) {
+    // Remove leading slash if present and parse as integer
+    const cidr = parseInt(input.replace(/^\//, ''));
+    return !isNaN(cidr) && cidr >= 0 && cidr <= 128 ? cidr : null;
+}
+
 function isValidCidr(cidr) {
-    const num = parseInt(cidr);
-    return !isNaN(num) && num >= 0 && num <= 128;
+    return parseCidrInput(cidr) !== null;
 }
 
 // Enhanced conversion function with validation
@@ -173,16 +178,18 @@ function convertInputWithValidation(type, value1, value2 = '') {
             isValid = false;
             errorMessage = 'Invalid CIDR: must be 0-128';
         } else {
-            const cidr = parseInt(value1);
-            if (cidr <= 32) {
-                results.subnetMask = cidrToSubnetMask(cidr);
-                results.binaryMask = cidrToBinaryMask(cidr);
-                results.ipRange = cidrToIpRange(cidr).join(' - ');
-                results.networkClass = getNetworkClass(cidr);
-            } else if (cidr <= 128) {
-                results.subnetMask = cidrToIpv6SubnetMask(cidr);
-                results.ipRange = cidrToIpv6Range(cidr).join(' - ');
-                results.networkClass = 'IPv6';
+            const cidr = parseCidrInput(value1);
+            if (cidr !== null) {
+                if (cidr <= 32) {
+                    results.subnetMask = cidrToSubnetMask(cidr);
+                    results.binaryMask = cidrToBinaryMask(cidr);
+                    results.ipRange = cidrToIpRange(cidr).join(' - ');
+                    results.networkClass = getNetworkClass(cidr);
+                } else if (cidr <= 128) {
+                    results.subnetMask = cidrToIpv6SubnetMask(cidr);
+                    results.ipRange = cidrToIpv6Range(cidr).join(' - ');
+                    results.networkClass = 'IPv6';
+                }
             }
         }
     } else if (type === 'ipmask') {
