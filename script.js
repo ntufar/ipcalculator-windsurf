@@ -396,4 +396,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (maskInput) {
         maskInput.addEventListener('input', updateCalculator);
     }
+
+    // Trigger initial calculation for IP/Mask fields if they have pre-filled values
+    if (ipInput && maskInput && ipInput.value && maskInput.value) {
+        updateCalculator();
+    }
 });
