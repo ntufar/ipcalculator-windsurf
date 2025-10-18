@@ -385,6 +385,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (cidrInput) {
         cidrInput.addEventListener('input', updateCalculator);
+        // Trigger initial calculation if field has pre-filled value
+        if (cidrInput.value) {
+            updateCalculator();
+        }
     }
     if (ipInput) {
         ipInput.addEventListener('input', updateCalculator);
