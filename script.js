@@ -8,6 +8,22 @@ function cidrToSubnetMask(cidr) {
     return [(mask >> 24) & 0xff, (mask >> 16) & 0xff, (mask >> 8) & 0xff, mask & 0xff].join('.');
 }
 
+function cidrToBinaryMask(cidr) {
+    if (cidr < 0 || cidr > 32) return null;
+    const mask = (0xffffffff << (32 - cidr)) >>> 0;
+    const binary = [(mask >> 24) & 0xff, (mask >> 16) & 0xff, (mask >> 8) & 0xff, mask & 0xff]
+        .map(p => p.toString(2).padStart(8, '0')).join('.');
+    return binary;
+}
+
+function getNetworkClass(cidr) {
+    if (cidr >= 0 && cidr <= 8) return 'A';
+    if (cidr >= 9 && cidr <= 15) return 'B';
+    if (cidr >= 16 && cidr <= 24) return 'C';
+    if (cidr >= 25 && cidr <= 32) return 'D (Multicast)';
+    return 'Unknown';
+}
+
 function cidrToIpRange(cidr, networkAddress = '192.168.1.0') {
     if (cidr < 0 || cidr > 32) return null;
     const ip = networkAddress.split('.').map(Number);
@@ -68,16 +84,24 @@ function convertInput(type, value1, value2 = '') {
         if (!isNaN(cidr)) {
             if (cidr <= 32) {
                 results.subnetMask = cidrToSubnetMask(cidr);
+                results.binaryMask = cidrToBinaryMask(cidr);
                 results.ipRange = cidrToIpRange(cidr).join(' - ');
+                results.networkClass = getNetworkClass(cidr);
             } else if (cidr <= 128) {
                 results.subnetMask = cidrToIpv6SubnetMask(cidr);
                 results.ipRange = cidrToIpv6Range(cidr).join(' - ');
+                results.networkClass = 'IPv6';
             }
         }
     } else if (type === 'ipmask') {
         const cidr = ipAndMaskToCidr(value1, value2);
         if (cidr !== null) {
             results.cidr = `/${cidr}`;
+            if (cidr <= 32) {
+                results.networkClass = getNetworkClass(cidr);
+            } else {
+                results.networkClass = 'IPv6';
+            }
         }
     }
     return results;
@@ -185,63 +209,162 @@ function updateCalculator() {
     const ipInput = document.getElementById('ip-input');
     const maskInput = document.getElementById('mask-input');
     const subnetMaskOutput = document.getElementById('subnet-mask');
+    const binaryMaskOutput = document.getElementById('binary-mask');
     const ipRangeOutput = document.getElementById('ip-range');
+    const networkClassOutput = document.getElementById('network-class');
     const cidrOutput = document.getElementById('cidr-output');
 
     // Clear previous error states
     [cidrInput, ipInput, maskInput].forEach(input => {
         if (input) {
-            input.classList.remove('error');
+            input.classList.remove('error', 'valid');
             const errorEl = input.parentNode.querySelector('.error-message');
             if (errorEl) errorEl.remove();
         }
     });
 
+    // Handle CIDR input
     if (cidrInput && cidrInput.value) {
         const { results, isValid, errorMessage } = convertInputWithValidation('cidr', cidrInput.value);
         if (isValid) {
             subnetMaskOutput.textContent = results.subnetMask || 'Invalid CIDR';
+            binaryMaskOutput.textContent = results.binaryMask || 'Invalid CIDR';
             ipRangeOutput.textContent = results.ipRange || 'Invalid CIDR';
+            networkClassOutput.textContent = results.networkClass || 'Invalid CIDR';
+            updateInputStatus(cidrInput, true);
         } else {
             subnetMaskOutput.textContent = errorMessage;
+            binaryMaskOutput.textContent = '';
             ipRangeOutput.textContent = '';
-            cidrInput.classList.add('error');
+            networkClassOutput.textContent = '';
+            updateInputStatus(cidrInput, false, true);
             showError(cidrInput, errorMessage);
         }
     } else {
         subnetMaskOutput.textContent = 'Enter CIDR to see result';
+        binaryMaskOutput.textContent = 'Enter CIDR to see result';
         ipRangeOutput.textContent = 'Enter CIDR to see result';
+        networkClassOutput.textContent = 'Enter CIDR to see result';
+        updateInputStatus(cidrInput, false);
     }
 
+    // Handle IP/Mask input
     if (ipInput && ipInput.value && maskInput && maskInput.value) {
         const { results, isValid, errorMessage } = convertInputWithValidation('ipmask', ipInput.value, maskInput.value);
         if (isValid) {
             cidrOutput.textContent = results.cidr || 'Invalid IP/Mask';
+            if (results.networkClass) {
+                networkClassOutput.textContent = results.networkClass;
+            }
+            updateInputStatus(ipInput, true);
+            updateInputStatus(maskInput, true);
         } else {
             cidrOutput.textContent = errorMessage;
             if (errorMessage.includes('IP')) {
-                ipInput.classList.add('error');
+                updateInputStatus(ipInput, false, true);
+                updateInputStatus(maskInput, false);
                 showError(ipInput, errorMessage);
             } else {
-                maskInput.classList.add('error');
+                updateInputStatus(ipInput, true);
+                updateInputStatus(maskInput, false, true);
                 showError(maskInput, errorMessage);
             }
         }
-    } else if (ipInput && ipInput.value || maskInput && maskInput.value) {
-        cidrOutput.textContent = 'Enter both IP and subnet mask';
     } else {
-        cidrOutput.textContent = 'Enter IP and Mask to see result';
+        if (ipInput && ipInput.value) {
+            updateInputStatus(ipInput, isValidIpv4(ipInput.value) || isValidIpv6(ipInput.value));
+        } else {
+            updateInputStatus(ipInput, false);
+        }
+
+        if (maskInput && maskInput.value) {
+            updateInputStatus(maskInput, isValidSubnetMask(maskInput.value));
+        } else {
+            updateInputStatus(maskInput, false);
+        }
+
+        if (ipInput && ipInput.value || maskInput && maskInput.value) {
+            cidrOutput.textContent = 'Enter both IP and subnet mask';
+        } else {
+            cidrOutput.textContent = 'Enter IP and Mask to see result';
+        }
     }
 }
 
 function showError(input, message) {
     const errorEl = document.createElement('div');
     errorEl.className = 'error-message';
-    errorEl.textContent = message;
+    errorEl.innerHTML = getEnhancedErrorMessage(message, input);
     errorEl.style.color = '#e74c3c';
     errorEl.style.fontSize = '0.85rem';
     errorEl.style.marginTop = '0.25rem';
     input.parentNode.appendChild(errorEl);
+}
+
+function getEnhancedErrorMessage(message, input) {
+    if (message.includes('CIDR')) {
+        return `${message}<br><small>Suggestion: Try values like 24 (for /24) or 64 (for /64)</small>`;
+    } else if (message.includes('IP')) {
+        return `${message}<br><small>Suggestion: Use format like 192.168.1.1 or 2001:db8::1</small>`;
+    } else if (message.includes('subnet mask')) {
+        return `${message}<br><small>Suggestion: Use format like 255.255.255.0 or 255.255.0.0</small>`;
+    }
+    return message;
+}
+
+// Copy to clipboard functionality
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    const text = element.textContent.trim();
+
+    if (text && text !== 'Enter CIDR to see result' && text !== 'Enter IP and Mask to see result' && text !== 'Invalid CIDR' && text !== 'Invalid IP/Mask') {
+        navigator.clipboard.writeText(text).then(() => {
+            const copyBtn = element.parentNode.querySelector('.copy-btn');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '✅';
+            copyBtn.classList.add('copied');
+
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+                copyBtn.classList.remove('copied');
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+
+            const copyBtn = element.parentNode.querySelector('.copy-btn');
+            copyBtn.innerHTML = '✅';
+            copyBtn.classList.add('copied');
+
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+                copyBtn.classList.remove('copied');
+            }, 2000);
+        });
+    }
+}
+
+// Update input status indicators
+function updateInputStatus(input, isValid, isError = false) {
+    const inputGroup = input.closest('.input-group');
+    const statusEl = inputGroup.querySelector('.input-status');
+
+    inputGroup.classList.remove('valid', 'error');
+    if (statusEl) statusEl.textContent = '';
+
+    if (isError) {
+        inputGroup.classList.add('error');
+        if (statusEl) statusEl.textContent = '❌';
+    } else if (isValid && input.value) {
+        inputGroup.classList.add('valid');
+        if (statusEl) statusEl.textContent = '✅';
+    }
 }
 
 // Event listeners

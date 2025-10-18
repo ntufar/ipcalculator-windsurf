@@ -19,18 +19,33 @@
                 <h2>CIDR to Subnet Mask & IP Range</h2>
                 <div class="input-group">
                     <label for="cidr-input">CIDR Notation (e.g., 24 or 64):</label>
-                    <input type="text" id="cidr-input" placeholder="24" aria-describedby="cidr-help">
-                    <small id="cidr-help">Enter CIDR value (0-128)</small>
+                    <input type="text" id="cidr-input" placeholder="24" aria-describedby="cidr-help" title="Enter CIDR prefix length (0-128)">
+                    <small id="cidr-help">Enter CIDR value (0-128) - IPv4: 0-32, IPv6: 0-128</small>
+                    <span class="input-status" id="cidr-status"></span>
                 </div>
 
                 <div class="output-group">
                     <div class="output-item">
                         <label>Subnet Mask:</label>
                         <output id="subnet-mask">Enter CIDR to see result</output>
+                        <button class="copy-btn" onclick="copyToClipboard('subnet-mask')" title="Copy subnet mask">📋</button>
                     </div>
+                    <div class="output-item">
+                        <label>Binary Representation:</label>
+                        <output id="binary-mask">Enter CIDR to see result</output>
+                        <button class="copy-btn" onclick="copyToClipboard('binary-mask')" title="Copy binary representation">📋</button>
+                    </div>
+                </div>
+                <div class="output-group">
                     <div class="output-item">
                         <label>IP Range:</label>
                         <output id="ip-range">Enter CIDR to see result</output>
+                        <button class="copy-btn" onclick="copyToClipboard('ip-range')" title="Copy IP range">📋</button>
+                    </div>
+                    <div class="output-item">
+                        <label>Network Class:</label>
+                        <output id="network-class">Enter CIDR to see result</output>
+                        <button class="copy-btn" onclick="copyToClipboard('network-class')" title="Copy network class">📋</button>
                     </div>
                 </div>
             </section>
@@ -41,11 +56,13 @@
                 <div class="input-row">
                     <div class="input-group">
                         <label for="ip-input">IP Address:</label>
-                        <input type="text" id="ip-input" placeholder="192.168.1.1" aria-describedby="ip-help">
+                        <input type="text" id="ip-input" placeholder="192.168.1.1" aria-describedby="ip-help" title="Enter IPv4 or IPv6 address">
+                        <span class="input-status" id="ip-status"></span>
                     </div>
                     <div class="input-group">
                         <label for="mask-input">Subnet Mask:</label>
-                        <input type="text" id="mask-input" placeholder="255.255.255.0" aria-describedby="mask-help">
+                        <input type="text" id="mask-input" placeholder="255.255.255.0" aria-describedby="mask-help" title="Enter subnet mask in dotted decimal format">
+                        <span class="input-status" id="mask-status"></span>
                     </div>
                 </div>
                 <small id="ip-help">IPv4 or IPv6 address</small>
@@ -55,6 +72,7 @@
                     <div class="output-item">
                         <label>CIDR Notation:</label>
                         <output id="cidr-output">Enter IP and Mask to see result</output>
+                        <button class="copy-btn" onclick="copyToClipboard('cidr-output')" title="Copy CIDR notation">📋</button>
                     </div>
                 </div>
             </section>
