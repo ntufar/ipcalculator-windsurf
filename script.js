@@ -176,10 +176,13 @@ function convertInputWithValidation(type, value1, value2 = '') {
             const cidr = parseInt(value1);
             if (cidr <= 32) {
                 results.subnetMask = cidrToSubnetMask(cidr);
+                results.binaryMask = cidrToBinaryMask(cidr);
                 results.ipRange = cidrToIpRange(cidr).join(' - ');
+                results.networkClass = getNetworkClass(cidr);
             } else if (cidr <= 128) {
                 results.subnetMask = cidrToIpv6SubnetMask(cidr);
                 results.ipRange = cidrToIpv6Range(cidr).join(' - ');
+                results.networkClass = 'IPv6';
             }
         }
     } else if (type === 'ipmask') {
